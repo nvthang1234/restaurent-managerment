@@ -32,21 +32,16 @@ module.exports = {
       required:true
     },
     
-    address:{
-      type:"string"
-    },
-    
     phone_number:{
       type:"number"
     },
     
     role:{
-      type:"string",
+      model:"role",
     },
-    isactive:{
-      type:"boolean"
+    deletedAt:{
+      type:"number"
     }
-
   },
   
   customToJSON: function () {

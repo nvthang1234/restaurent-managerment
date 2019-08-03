@@ -16,7 +16,6 @@ module.exports = {
             role: req.body.role,
             address: req.body.address,
             phone_number: req.body.phone_number,
-            isactive: req.body.isactive
         };
 
         let exist = await User.findOne({
@@ -33,12 +32,6 @@ module.exports = {
                 message: sails.__("registerFailed")
             }));
         }
-        var digits = '0123456789';
-        let OTP = '';
-        for (let i = 0; i < 6; i++) {
-            OTP += digits[Math.floor(Math.random() * 10)];
-        }
-        Mailer.sendWelcomeMail(create, OTP, "resign");
         return res.status(201).json(Res.success(create, {
             message: sails.__("registerSuccess")
         }))
@@ -59,11 +52,6 @@ module.exports = {
             if (!user) {
                 return res.status(401).json(Res.error(undefined, {
                     message: info.message
-                }));
-            }
-            if (!user.isactive) {
-                return res.status(401).json(Res.error(undefined, {
-                    message: 'Email has not been activated'
                 }));
             }
             var templateToken = {
@@ -87,7 +75,6 @@ module.exports = {
                 console.log('token', token)
                 const adata = {
                     token: token,
-                    isactive: true,
                     issuedAt: decode.iat,
                     expiretime: decode.exp,
                     owner: user.id
@@ -129,7 +116,7 @@ module.exports = {
                 var updateToken = await Jwtoken.update({
                     id: checktonken.id
                 }, {
-                        isactive: false
+                        deletedAt: new Date().getTime()
                     }).fetch();
             } catch (error) {
                 return res.status(400).json(Res.error(undefined, {
@@ -256,40 +243,15 @@ module.exports = {
                 sort: 'updatedAt DESC'
             })
         }
-        else{
+        else {
             data = await User.findOne({ id: req.body.id })
-            if(!data)
-                return res.status(400).json(Res.error(undefined,{
-                    message:"can not find user"
+            if (!data)
+                return res.status(400).json(Res.error(undefined, {
+                    message: "can not find user"
                 }))
         }
         return res.status(200).json(Res.success(data, {
             message: "get User success"
-        }))
-    },
-
-    delete: async (req, res) => {
-        const id = req.param('id');
-        let user = await User.findOne({
-            id: id
-        })
-        if (user.role === 'admin') {
-            return res.status(400).json(Res.error(undefined, { message: 'cannot delete admin account' }));
-        }
-        try {
-            await User.destroy({ id: id })
-        } catch (error) {
-            switch (error.name) {
-                case 'UsageError':
-                    return res.status(400).json(Res.error(undefined, { message: sails.__('invalidInput') }));
-                case 'AdapterError':
-                    return res.status(400).json(Res.error(undefined, { message: sails.__('adapterError') }));
-                default:
-                    return res.serverError(error)
-            }
-        }
-        return res.status(200).json(Res.success(undefined, {
-            message: 'delete User Success'
         }))
     },
 
@@ -305,11 +267,6 @@ module.exports = {
             if (!user) {
                 return res.status(401).json(Res.error(undefined, {
                     message: info.message
-                }));
-            }
-            if (!user.isactive) {
-                return res.status(401).json(Res.error(undefined, {
-                    message: 'Email has not been activated'
                 }));
             }
             if (!req.body.newpassword)
